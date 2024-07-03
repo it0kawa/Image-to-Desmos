@@ -5,7 +5,8 @@ This repo let's you convert an image (or frames of videos) to Bezier functions a
 <p>I am in college and this is my first more or less serious project that i did MOSTLY by myself (i had to search for help for some js parts and some flask things).</p>
 <p>It probably sucks (especially the js parts) but yeah im kinda proud of myself for using the documentations and planning almost everything by myself for the first time.</p>
 
-<p>I learned a lot :D and did a funny [video](https://www.youtube.com/channel/@miku_shrimp)<br>
+
+<p>I learned a lot :D and did a funny video, check it out [here!](https://youtu.be/qX3adQNVPNE)<br>
 
 Huge thanks to [Junferno](https://www.youtube.com/@Junferno) for insipiring me and giving me an overall idea on how to do this with the explanations in this [video](https://www.youtube.com/watch?v=BQvBq3K50u8).
 </p>
