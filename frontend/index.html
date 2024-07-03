@@ -1,0 +1,164 @@
+<html lang='en'>
+<head>
+    <style>  
+    .calculator-style {
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        background-color: lightgray;
+        /*border: 1px solid black;*/
+    }
+    </style>    
+    <script src="https://www.desmos.com/api/v1.3/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+</head>
+<body>
+    <div id="calculator" class="calculator-style"></div>
+    <script>
+        const get_calculator = document.getElementById('calculator');
+        // var because i use it in screenshot() (idk if its actually necessary i dont know js)
+        var calculator = Desmos.GraphingCalculator(get_calculator); 
+
+        // lagtrain is 1280x720, adjust for others
+        const xmin = -100;
+        const xmax = 1380;
+        const ymin = -100;
+        const ymax = 820;
+
+        calculator.setMathBounds({
+            left: xmin,
+            right: xmax,
+            bottom: ymin,
+            top: ymax
+        });
+        // restrictions (for black frames i just used 2 inequations)
+        calculator.setExpression({ id: 'bottom', latex: 'y=0 \\{0 <= x <= 1280\\}', color: '#000000' });
+        calculator.setExpression({ id: 'top', latex: 'y=720 \\{0 <= x <= 1280\\}', color: '#000000' });
+        calculator.setExpression({ id: 'left', latex: 'x=0 \\{0 <= y <= 720\\}', color: '#000000' });
+        calculator.setExpression({ id: 'right', latex: 'x=1280 \\{0 <= y <= 720\\}', color: '#000000' });
+
+        // we will use it to delete all previous expressions at once (except restrictions) 
+        var DefaultState = calculator.getState();
+        calculator.setDefaultState(DefaultState);
+
+        // sleep function
+        async function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // take screenshot and send to server to download 
+        async function screenshot(index, is_empty) {
+            console.log("taking a screenshot...");
+            
+            // wait to ensure the frame is rendered most of the times
+            await sleep(5000);  
+            // full-size screenshot 
+            var fullsize = calculator.screenshot({
+                width: xmax - xmin,
+                height: ymax - ymin,
+                targetPixelRatio: 1,
+                // true only if height/width < 256
+                preserveAxisNumbers: false 
+            });
+            // flask server downloads the files to make it easier.
+            // if i did it here google kept asking for permission to download multiple files
+            try {
+                const response = await fetch('http://127.0.0.1:5000/screenshot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' 
+                    },
+                    // sned data
+                    body: JSON.stringify( {'index':index, 'url':fullsize, 'is_empty':is_empty})
+                });
+
+                if (!response.ok) {
+                    if (response.status === 400) {
+                        console.error('screenshot empty, taking again in a few seconds...');
+                        // some frames just took too long
+                        await screenshot(index, is_empty);
+                    }
+                    else if (response.status === 500) {
+                        console.error('server error, path might not exist');
+                        throw new Error('Network response was not ok');
+                    } 
+                }
+
+                const data = await response.json();
+                console.log('Success:', data);
+            } 
+            catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // refresh desmos frame
+        async function refresh_frame(frame) {
+            // delete all existing expressions (except initial restrictions)
+            calculator.setState(DefaultState);
+
+            let num_of_expr = 0;
+            // add new expressions
+            const length = frame.length;
+            for (const expression of frame) {
+                calculator.setExpression({ id: `expression-${num_of_expr}`, latex: expression, color: '#000000' });
+                num_of_expr++;
+                console.log(`${((num_of_expr / length) * 100).toFixed(2)}%`);
+            }
+        }
+
+        // fetch new frame from flask server
+        async function change_frame(index) {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/element?index=${index}`);
+                if (!response.ok) throw new Error(`response had some issues in index: ${index}`);
+                const frame = await response.json();
+                return frame;
+            } 
+            catch (error) {
+                console.error('Error:', error);
+                throw error;
+            }
+        }
+        
+        // manage process for every frame
+        async function draw_frames(num_frames) {
+            let index = 0;
+            while (index < num_frames) {
+                try {
+                    const frame = await change_frame(index);
+                    await refresh_frame(frame);
+                    // checking if the image should be empty to not infinitely loop 
+                    // when finding an empty graph
+                    // if is_empty = false and graph is blank then we retake ss
+                    const is_empty = frame.length === 0;
+                    await screenshot(index, is_empty); 
+
+                    console.log(`> ${index} of ${num_frames}`);
+                    index++;
+                    // eh that range has black frames i pre calculated 
+                    //if (index === 4934) index = 5013;
+                } 
+                catch (error) {
+                    console.error('Error drawing frame:', error);
+                }
+            }
+            console.log(">>> Finished!");
+        }
+
+        async function start() {
+            try {
+                // fetch number of frames stored in index -1
+                const response = await fetch('http://127.0.0.1:5000/element?index=-1');
+                if (!response.ok) throw new Error("issues fetching number of frames...");
+                const num_frames = await response.json();
+                const numframes = num_frames['num of frames'];
+                console.log(`started, ${numframes} frames!`);
+                await draw_frames(numframes);
+            } 
+            catch (error) {
+                console.error('Error at start:', error);
+            }
+        }
+    </script>
+</body>
+</html>
