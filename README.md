@@ -25,7 +25,7 @@ pip install requirements.txt
 ffmpeg -i video.mp4 -vf fps=24 -start_number 0 frame%d.png
 ```
 
-I recommend saving your original frames in [originalframes](.\frames\originalframes) to follow a general structure. However, **it's not required**. 
+I recommend saving your original frames in [originalframes](./frames/originalframes) to follow a general structure. However, **it's not required**. 
 
 **<br>2. Converting Your images**
 - Convert your images from BGR to GRAY (if they weren't) to apply canny.<br><br>
@@ -52,8 +52,8 @@ print("finished!")
 ```
 
 **<br>3. Note that:**
-- you **must only** store your converted frames, in [convertedframes](.\frames\convertedframes).
-- your desmos calculator screenshots will be stored in [desmosframes](.\frames\desmosframes).
+- you **must only** store your converted frames, in [convertedframes](./frames/convertedframes).
+- your desmos calculator screenshots will be stored in [desmosframes](./frames/desmosframes).
 
 
 **<br>4.You might want to change some variables:**
@@ -89,9 +89,9 @@ async function screenshot(index, is_empty) {
 </p>
 
 ## Usage
-- Execute [`calculate_frames.py`](./backend/calculate_frames.py). **(the expressions will be stored in [`serverframes.json`](.\frames\serverframes.json))**. 
-- [`serverframes.json`](.\frames\serverframes.json) **must** be kept in [frames](.\frames) directory.
-- Upload [`serverframes.json`](.\frames\serverframes.json) to your local server with [`app.py`](./backend/app.py).
+- Execute [`calculate_frames.py`](./backend/calculate_frames.py). **(the expressions will be stored in [`serverframes.json`](./frames/serverframes.json))**. 
+- [`serverframes.json`](./frames/serverframes.json) **must** be kept in [frames](./frames) directory.
+- Upload [`serverframes.json`](./frames/serverframes.json) to your local server with [`app.py`](./backend/app.py).
 - Open [`index.html`](./frontend/index.html) with your browser.
 - Type start() in the browser's console and you are ready to go!
 
